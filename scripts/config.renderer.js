@@ -4,12 +4,12 @@ let cancel = document.getElementById('cancel')
 let config = null
 
 const save = async () => {
-    let inputs = document.forms['config'].getElementsByTagName('input')
+    let inputs = document.forms['config'].querySelectorAll('input, textarea')
 
     for (const input of inputs) {
         config[input.id] = input.value
     }
-    
+
     await api.saveConfig(config)
     api.exit()
 }

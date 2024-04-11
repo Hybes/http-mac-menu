@@ -1,7 +1,9 @@
 const { app, Tray, Menu, BrowserWindow, nativeImage, globalShortcut, ipcMain} = require('electron')
 
-const settings = require('electron-settings')
+const os = require('os')
 const path = require('path')
+const fs = require('fs')
+const settings = require('electron-settings')
 const axios = require('axios')
 const Sentry = require('@sentry/electron')
 
@@ -11,10 +13,25 @@ if (process.env.NODE_ENV !== 'development') {
   });
 };
 
+const appSupportPath = app.getPath('userData');
+const logFilePath = path.join(appSupportPath, 'http-mac-menu.log');
 let tray = null
 let isQuiting = false
 let settingsCache = {}
 let configWindow = null
+
+const clearLogFile = () => {
+  fs.writeFileSync(logFilePath, ''); // Clear the log file
+};
+
+const checkAndCleanLogFile = () => {
+  const stats = fs.statSync(logFilePath);
+  const fileSizeInBytes = stats.size;
+  const fileSizeInMegabytes = fileSizeInBytes / (1024*1024);
+  if (fileSizeInMegabytes > 10) {
+    clearLogFile(); // Clear the log file if it's larger than 10MB
+  }
+};
 
 const loadConfig = async () => {
   return await settings.get()
@@ -78,13 +95,12 @@ const updateTrayTitle = async () => {
       finalHeaders = {};
     }
 
-    let title = 'No Config'
+    let title = 'Invalid Data'
 
     if (url) {
-    const res = await axios.get(url, {
-      headers: finalHeaders
-    })
-      .then((res) => {
+      try {
+        const res = await axios.get(url, { headers: finalHeaders });
+        let dataString;
         if (json) {
           const path = json.split('.');
           let value = res.data;
@@ -92,42 +108,36 @@ const updateTrayTitle = async () => {
             value = value[path[i]];
           }
           if (multiplier) {
-            value *= multiplier;
+            value = (value * multiplier).toLocaleString();
           }
-          let stringValue = value.toString();
-          if (prefix) {
-            stringValue = prefix + stringValue;
-          }
-          if (suffix) {
-            stringValue += suffix;
-          }
-          if (length) {
-            stringValue = stringValue.substring(0, length);
-          }
-          title = stringValue;
-        }
-        else
-        {
-          let dataString = res.data.toString();
+          dataString = value.toString();
+        } else {
+          dataString = res.data.toString();
           if (multiplier) {
-            dataString = (parseFloat(dataString) * multiplier).toString();
+            dataString = (parseFloat(dataString) * multiplier).toLocaleString();
           }
-          if (prefix) {
-            dataString = prefix + dataString;
-          }
-          if (suffix) {
-            dataString += suffix;
-          }
-          if (length) {
-            dataString = dataString.substring(0, length);
-          }
-          title = dataString;
         }
-      })
-      .catch(err => {
-        console.error(err)
-        Sentry.captureException(err)
-      })
+        if (prefix) {
+          dataString = prefix + dataString;
+        }
+        if (suffix) {
+          dataString += suffix;
+        }
+        if (length) {
+          dataString = dataString.substring(0, length);
+        }
+        title = dataString;
+
+        const successTimestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+        fs.appendFileSync(logFilePath, `Success: ${successTimestamp} - ${JSON.stringify(res.data)}\n`);
+        checkAndCleanLogFile();
+      } catch (err) {
+        console.error(err.toString());
+        Sentry.captureException(err);
+        const errorTimestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+        fs.appendFileSync(logFilePath, `Error: ${errorTimestamp} - ${err.toString()}\n`);
+        checkAndCleanLogFile();
+      }
     }
     else return
     tray.setTitle(title)
@@ -157,6 +167,8 @@ const startUpdateInterval = async () => {
 
 app.whenReady().then(async () => {
 
+  clearLogFile(); // Clear the log file on startup
+
   if (!settings.get()) {
     openConfig()
   } else {
@@ -180,6 +192,13 @@ app.whenReady().then(async () => {
           click: openConfig
       },
       {
+        label: 'Open Log',
+        type: 'normal',
+        click: () => {
+            require('electron').shell.openPath(logFilePath)
+        }
+      },
+      {
           label: 'Quit',
           type: 'normal',
           click: exitApp
@@ -197,12 +216,12 @@ app.whenReady().then(async () => {
       icon = nativeImage.createEmpty()
       tray = new Tray(icon)
       app.dock.hide()
-      tray.setTitle('No Config')
+      tray.setTitle('Invalid Platform')
   }
   else {
       icon = nativeImage.createFromPath('assets/trayWin.png')
       tray = new Tray(icon)
-      tray.setTitle('No Config')
+      tray.setTitle('Loading...')
   }
 
   tray.setContextMenu(contextMenu)
