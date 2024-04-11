@@ -11,7 +11,7 @@ If you don't know which option to select, choose the first one:<br><br>
 [Mac OS ZIP - 64Bit/Intel](https://store.brth.uk/hybes/HTTP%20Mac%20Menu-1.4.0-mac.zip)<br>
 [Mac OS ZIP - ARM64/Silicon](https://store.brth.uk/hybes/HTTP%20Mac%20Menu-1.4.0-arm64-mac.zip)
 
-
+I don't understand Apple's quarantine stuff, so you might need to run: ```xattr -cr /Applications/HTTP\ Mac\ Menu.app``` in terminal after you've moved the app to your Applications folder.
 
 ## Usage
 
@@ -20,7 +20,7 @@ You can then close the settings window. Don't CMD-Q as it will quit the whole ap
 
 ### Running Multiple Instances
 
-If you want to run multiple copies, I suggest you duplicate the App in Applications and rename it for each instance you want running.
+The application has support for up to 3 different requests, each with their own configuration.
 
 ## Settings / Configuration
 
