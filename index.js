@@ -26,6 +26,10 @@ let isQuiting = false;
 let settingsCache = {};
 let configWindow = null;
 
+let updateIntervals = {}; // Object to store intervals
+
+let trayTitles = {}; // Object to store titles for each configuration
+
 const clearLogFile = () => {
   fs.writeFileSync(logFilePath, ''); // Clear the log file
 };
@@ -86,107 +90,121 @@ const exitApp = () => {
   app.quit();
 };
 
-const updateTrayTitle = async () => {
+const updateTrayTitleForConfig = async (configNumber) => {
   try {
     let title = 'Invalid Data';
-    for (let i = 1; i <= 3; i++) {
-      const {
-        [`url${i}`]: url,
-        [`headers${i}`]: headers,
-        [`prefix${i}`]: prefix,
-        [`suffix${i}`]: suffix,
-        [`multiplier${i}`]: multiplier,
-        [`json${i}`]: json,
-        [`length${i}`]: length,
-      } = settingsCache;
+    // Access settings specifically for this configuration
+    const {
+      [`url${configNumber}`]: url,
+      [`headers${configNumber}`]: headers,
+      [`prefix${configNumber}`]: prefix,
+      [`suffix${configNumber}`]: suffix,
+      [`multiplier${configNumber}`]: multiplier,
+      [`json${configNumber}`]: json,
+      [`length${configNumber}`]: length,
+    } = settingsCache;
 
-      let finalHeaders = headers
-        ? headers.split(',').reduce((result, header) => {
-            const [key, value] = header.split(':').map((item) => item.trim());
-            result[key] = value;
-            return result;
-          }, {})
-        : {};
+    let finalHeaders = headers
+      ? headers.split(',').reduce((result, header) => {
+          const [key, value] = header.split(':').map((item) => item.trim());
+          result[key] = value;
+          return result;
+        }, {})
+      : {};
 
-      if (url) {
-        try {
-          const res = await axios.get(url, { headers: finalHeaders });
-          let dataString;
-          if (json) {
-            const path = json.split('.');
-            let value = res.data;
-            for (const p of path) {
-              value = value[p];
-            }
-            value = multiplier
-              ? (value * multiplier).toLocaleString()
-              : value.toString();
-            dataString = value;
-          } else {
-            dataString = res.data.toString();
-            if (multiplier) {
-              dataString = (
-                parseFloat(dataString) * multiplier
-              ).toLocaleString();
-            }
-          }
-          if (length) {
-            dataString = dataString.substring(0, length);
-          }
-          if (prefix) {
-            dataString = prefix + dataString;
-          }
-          if (suffix) {
-            dataString += suffix;
-          }
-          title = i === 1 ? dataString : `${title} | ${dataString}`;
-
-          const successTimestamp = new Date()
-            .toISOString()
-            .replace('T', ' ')
-            .substring(0, 19);
-          fs.appendFileSync(
-            logFilePath,
-            `${successTimestamp} - Success (Request ${i}): ${JSON.stringify(res.data)}\n`
-          );
-          checkAndCleanLogFile();
-        } catch (err) {
-          console.error(err.toString());
-          Sentry.captureException(err);
-          const errorTimestamp = new Date()
-            .toISOString()
-            .replace('T', ' ')
-            .substring(0, 19);
-          fs.appendFileSync(
-            logFilePath,
-            `${errorTimestamp} - Error (Request ${i}): ${err.toString()}\n`
-          );
-          checkAndCleanLogFile();
+    if (url) {
+      const res = await axios.get(url, { headers: finalHeaders });
+      let dataString;
+      if (json) {
+        const path = json.split('.');
+        let value = res.data;
+        for (const p of path) {
+          value = value[p];
+        }
+        value = multiplier
+          ? (value * multiplier).toLocaleString()
+          : value.toString();
+        dataString = value;
+      } else {
+        dataString = res.data.toString();
+        if (multiplier) {
+          dataString = (parseFloat(dataString) * multiplier).toLocaleString();
         }
       }
+      if (length) {
+        dataString = dataString.substring(0, length);
+      }
+      if (prefix) {
+        dataString = prefix + dataString;
+      }
+      if (suffix) {
+        dataString += suffix;
+      }
+      title = dataString;
+
+      // Log success with specific configuration reference
+      const successTimestamp = new Date()
+        .toISOString()
+        .replace('T', ' ')
+        .substring(0, 19);
+      fs.appendFileSync(
+        logFilePath,
+        `${successTimestamp} - Success (Config ${configNumber}): ${JSON.stringify(res.data)}\n`
+      );
+      checkAndCleanLogFile();
     }
 
-    tray.setTitle(title);
+    trayTitles[configNumber] = title;
+    return title;
   } catch (err) {
-    console.error(err);
+    console.error(err.toString());
     Sentry.captureException(err);
+    // Log error with specific configuration reference
+    const errorTimestamp = new Date()
+      .toISOString()
+      .replace('T', ' ')
+      .substring(0, 19);
+    fs.appendFileSync(
+      logFilePath,
+      `${errorTimestamp} - Error (Config ${configNumber}): ${err.toString()}\n`
+    );
+    checkAndCleanLogFile();
   }
 };
 
-let updateInterval = null;
+const startConfigIntervals = async () => {
+  const configs = [1, 2, 3]; // Adjust based on actual configurations
+  configs.forEach((configNumber) => {
+    startUpdateInterval(configNumber);
+  });
+};
 
-const startUpdateInterval = async () => {
-  if (updateInterval) {
-    clearInterval(updateInterval);
+const updateCombinedTrayTitle = () => {
+  const configNumbers = [1, 2, 3]; // Adjust based on actual configurations
+  const titles = configNumbers.map(
+    (configNumber) => trayTitles[configNumber] || 'Loading...'
+  );
+
+  // Combine titles with a separator and update the tray title
+  const combinedTitle = titles.join(' | ');
+  tray.setTitle(combinedTitle);
+};
+
+const startUpdateInterval = async (configNumber) => {
+  if (updateIntervals[configNumber]) {
+    clearInterval(updateIntervals[configNumber]);
   }
 
-  let timer = await settings.get('timer');
+  // Fetch the timer setting specific to the configuration
+  let timer = await settings.get(`timer${configNumber}`);
   if (timer === undefined || timer === null || timer < 5000) {
     timer = 5000; // Default to 5000ms if the setting is invalid
   }
 
-  updateInterval = setInterval(() => {
-    updateTrayTitle();
+  // Set a new interval for this config
+  updateIntervals[configNumber] = setInterval(async () => {
+    await updateTrayTitleForConfig(configNumber);
+    updateCombinedTrayTitle(); // Update the combined title after fetching the new title
   }, timer);
 };
 
@@ -262,20 +280,11 @@ app.whenReady().then(async () => {
   tray.setToolTip('Loading...');
   tray.setTitle('Loading...');
 
-  // Set the initial tray title
-  updateTrayTitle();
-  startUpdateInterval();
+  await updateTrayTitleForConfig(1);
+  await updateTrayTitleForConfig(2);
+  await updateTrayTitleForConfig(3);
 
-  // Update the tray title every 5.1 seconds
-  setInterval(async () => {
-    const currentTimer = await settings.get('timer');
-    if (
-      currentTimer !== undefined &&
-      currentTimer !== null &&
-      currentTimer >= 5000 &&
-      currentTimer !== timer
-    ) {
-      startUpdateInterval(); // Restart the interval with the new timer value
-    }
-  }, 10000);
+  updateCombinedTrayTitle();
+
+  await startConfigIntervals();
 });

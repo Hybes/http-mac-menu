@@ -10,6 +10,12 @@ const save = async () => {
     config[input.id] = input.value;
   }
 
+  // Update the timer setting for the specific configuration
+  await settings.set(
+    `timer${config['data-config-number']}`,
+    config[`timer${config['data-config-number']}`]
+  );
+
   await api.saveConfig(config);
   api.exit();
 };
