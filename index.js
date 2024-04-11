@@ -51,6 +51,16 @@ const saveConfig = async (_, config) => {
   await settings.set(config);
   settingsCache = { ...settingsCache, ...config };
   configWindow.close();
+  if (!settingsCache.url1) {
+    trayTitles[1] = '';
+  }
+  if (!settingsCache.url2) {
+    trayTitles[2] = '';
+  }
+  if (!settingsCache.url3) {
+    trayTitles[3] = '';
+  }
+  updateCombinedTrayTitle();
 };
 
 const exitConfig = async () => {
@@ -70,6 +80,12 @@ const openConfig = (configNumber) => {
     icon: nativeImage.createFromPath(
       path.join(__dirname, 'assets/trayWin.png')
     ),
+  });
+
+  configWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.control && input.key.toLowerCase() === 'd') {
+      configWindow.webContents.openDevTools();
+    }
   });
 
   configWindow.on('close', (event) => {
@@ -153,8 +169,7 @@ const updateTrayTitleForConfig = async (configNumber) => {
       );
       checkAndCleanLogFile();
     }
-
-    trayTitles[configNumber] = title;
+    if (url) trayTitles[configNumber] = title;
     return title;
   } catch (err) {
     console.error(err.toString());
@@ -173,6 +188,7 @@ const updateTrayTitleForConfig = async (configNumber) => {
 };
 
 const clearConfig = async (configNumber) => {
+  console.log(`Clearing config ${configNumber}`);
   const keys = [
     `url${configNumber}`,
     `headers${configNumber}`,
@@ -185,6 +201,13 @@ const clearConfig = async (configNumber) => {
   keys.forEach(async (key) => {
     await settings.set(key, '');
   });
+  trayTitles[configNumber] = ''; // Explicitly clear the title for the config
+
+  // Force a UI refresh if necessary (demonstrative, might not be needed)
+  tray.setTitle('Updating...');
+  setTimeout(() => {
+    updateCombinedTrayTitle(); // Update the combined tray title
+  }, 100); // Short delay to ensure UI refresh
 };
 
 const startConfigIntervals = async () => {
@@ -196,13 +219,12 @@ const startConfigIntervals = async () => {
 
 const updateCombinedTrayTitle = () => {
   const configNumbers = [1, 2, 3]; // Adjust based on actual configurations
-  const titles = configNumbers.map(
-    (configNumber) => trayTitles[configNumber] || 'Loading...'
-  );
+  const titles = configNumbers.map((configNumber) => trayTitles[configNumber]);
 
   // Combine titles with a separator and update the tray title
-  const combinedTitle = titles.join(' | ');
+  const combinedTitle = titles.filter((title) => title).join(' | ');
   tray.setTitle(combinedTitle);
+  tray.setToolTip(combinedTitle);
 };
 
 const startUpdateInterval = async (configNumber) => {

@@ -3,36 +3,37 @@ let cancel = document.getElementById('cancel');
 let clearConfig1 = document.getElementById('clearConfig1');
 let clearConfig2 = document.getElementById('clearConfig2');
 let clearConfig3 = document.getElementById('clearConfig3');
+let saveConfig1 = document.getElementById('saveConfig1');
+let saveConfig2 = document.getElementById('saveConfig2');
+let saveConfig3 = document.getElementById('saveConfig3');
 
-const clearForm = (configNumber) => {
-  let form = document.querySelector(
-    `form[data-config-number="${configNumber}"]`
-  );
-  let inputs = form.querySelectorAll('input[type=text], textarea');
-  inputs.forEach((input) => {
-    input.value = '';
-  });
+const clear = (formId) => {
+  try {
+    let form = document.getElementById(`form${formId}`);
+    let inputs = form.querySelectorAll('input[type=text], textarea');
+
+    for (const input of inputs) {
+      input.value = '';
+    }
+  } catch (error) {
+    console.error('Error clearing configuration:', error);
+  }
 };
 
 let config = null;
 
-const save = async () => {
-  let inputs = document.forms['config'].querySelectorAll('input, textarea');
+const save = async (formId) => {
+  try {
+    if (!config) config = {};
+    let form = document.getElementById(`form${formId}`);
+    let inputs = form.querySelectorAll('input, textarea');
 
-  for (const input of inputs) {
-    config[input.id] = input.value;
+    for (const input of inputs) {
+      config[input.id] = input.value;
+    }
+  } catch (error) {
+    console.error('Error saving configuration:', error);
   }
-
-  // Update the timer setting for the specific configuration
-  await settings.set(
-    `timer${config['data-config-number']}`,
-    config[`timer${config['data-config-number']}`]
-  );
-
-  awa;
-
-  await api.saveConfig(config);
-  api.exit();
 };
 
 const exit = async () => {
@@ -49,12 +50,23 @@ const loadConfig = async () => {
   }
 };
 
-clearConfig1?.addEventListener('click', () => clearForm('1'));
-clearConfig2?.addEventListener('click', () => clearForm('2'));
-clearConfig3?.addEventListener('click', () => clearForm('3'));
+clearConfig1?.addEventListener('click', () => clear('1'));
+clearConfig2?.addEventListener('click', () => clear('2'));
+clearConfig3?.addEventListener('click', () => clear('3'));
 
 window.addEventListener('DOMContentLoaded', loadConfig);
 
-saveConfig.onclick = async () => {
-  await save();
-};
+saveConfig1?.addEventListener('click', async () => {
+  await save('1');
+  await api.saveConfig(config);
+});
+
+saveConfig2?.addEventListener('click', async () => {
+  await save('2');
+  await api.saveConfig(config);
+});
+
+saveConfig3?.addEventListener('click', async () => {
+  await save('3');
+  await api.saveConfig(config);
+});
