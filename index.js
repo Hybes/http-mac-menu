@@ -13,6 +13,7 @@ if (process.env.NODE_ENV !== 'development') {
 
 let tray = null
 let isQuiting = false
+let settingsCache = {}
 let configWindow = null
 let prevNumber = null
 
@@ -20,8 +21,10 @@ const loadConfig = async () => {
   return await settings.get()
 }
 const saveConfig = async (_, config) => {
-  await settings.set(config)
-}
+  await settings.set(config);
+  settingsCache = { ...settingsCache, ...config }; // Update the cache
+  configWindow.close();
+};
 const exitConfig = async () => {
   if (configWindow)
       configWindow.close()
@@ -29,8 +32,8 @@ const exitConfig = async () => {
 const openConfig = () => {
   if (!configWindow) {
       configWindow = new BrowserWindow({
-          width: 840,
-          height: 560,
+          width: 780,
+          height: 680,
           autoHideMenuBar: true,
           title: 'Configuration',
           webPreferences: {
@@ -63,27 +66,18 @@ const exitApp = () => {
 
 const updateTrayTitle = async () => {
   try {
-    const options = {
-      headers: {
-        'accept': 'application/json'
-      }
+    const { url, headers, prefix, suffix, multiplier, json, length } = settingsCache;
+
+    let finalHeaders = null;
+    if (headers) {
+      finalHeaders = headers.split(',').reduce((result, header) => {
+        const [key, value] = header.split(':').map(item => item.trim());
+        result[key] = value;
+        return result;
+      }, {});
+    } else {
+      finalHeaders = {};
     }
-    const url = await settings.get('url')
-    const headers = await settings.get('headers')
-    let finalHeaders = null
-      if (headers) {
-        finalHeaders = headers.split(',').reduce((result, header) => {
-          const [key, value] = header.split(':').map(item => item.trim());
-          result[key] = value;
-          return result;
-        }, {});
-      } else {
-        finalHeaders = {}
-      }
-    const prefix = await settings.get('prefix')
-    const multiplier = await settings.get('multiplier')
-    const json = await settings.get('json')
-    const length = await settings.get('length')
 
     let title = 'No Config'
 
@@ -99,30 +93,36 @@ const updateTrayTitle = async () => {
             value = value[path[i]];
           }
           if (multiplier) {
-            value = value * multiplier
+            value *= multiplier;
           }
+          let stringValue = value.toString();
           if (prefix) {
-            title = prefix + value.toString();
+            stringValue = prefix + stringValue;
+          }
+          if (suffix) {
+            stringValue += suffix;
           }
           if (length) {
-            title = value.toString().substring(0, length)
+            stringValue = stringValue.substring(0, length);
           }
-          else
-          title = value.toString();
+          title = stringValue;
         }
         else
         {
+          let dataString = res.data.toString();
           if (multiplier) {
-            res.data = res.data * multiplier
+            dataString = (parseFloat(dataString) * multiplier).toString();
           }
           if (prefix) {
-            title = prefix + res.data.toString();
+            dataString = prefix + dataString;
+          }
+          if (suffix) {
+            dataString += suffix;
           }
           if (length) {
-            title = res.data.toString().substring(0, length)
+            dataString = dataString.substring(0, length);
           }
-          else
-          title = res.data.toString()
+          title = dataString;
         }
       })
       .catch(err => {
@@ -131,7 +131,6 @@ const updateTrayTitle = async () => {
       })
     }
     else return
-    // console.log(new Date(), title, url, headers, finalHeaders, prefix, multiplier)
     tray.setTitle(title)
   }
   catch (err) {
@@ -140,11 +139,32 @@ const updateTrayTitle = async () => {
   }
 }
 
+let updateInterval = null;
+
+const startUpdateInterval = async () => {
+  if (updateInterval) {
+    clearInterval(updateInterval);
+  }
+
+  let timer = await settings.get('timer');
+  if (timer === undefined || timer === null || timer < 5000) {
+    timer = 5000; // Default to 5000ms if the setting is invalid
+  }
+
+  updateInterval = setInterval(() => {
+    updateTrayTitle();
+  }, timer);
+};
+
 app.whenReady().then(async () => {
 
   if (!settings.get()) {
     openConfig()
+  } else {
+    settingsCache = await settings.get()
   }
+
+  openConfig()
 
   app.on('before-quit', () => {
       isQuiting = true
@@ -172,7 +192,7 @@ app.whenReady().then(async () => {
   let icon = null
   let timer = await settings.get('timer')
 
-  if (timer === undefined) {
+  if (timer === undefined || timer === null || timer < 5000) {
     timer = 5000
   }
 
@@ -189,15 +209,19 @@ app.whenReady().then(async () => {
   }
 
   tray.setContextMenu(contextMenu)
-  tray.setToolTip('HTTP Mac Menu')
-  tray.setTitle('HTTP Mac Menu')
+  tray.setToolTip('Loading...')
+  tray.setTitle('Loading...')
 
   // Set the initial tray title
   updateTrayTitle()
+  startUpdateInterval();
 
   // Update the tray title every 5.1 seconds
-  setInterval(() => {
-    updateTrayTitle()
-  }, timer)
+  setInterval(async () => {
+    const currentTimer = await settings.get('timer');
+    if (currentTimer !== undefined && currentTimer !== null && currentTimer >= 5000 && currentTimer !== timer) {
+      startUpdateInterval(); // Restart the interval with the new timer value
+    }
+  }, 10000);
 
 })
