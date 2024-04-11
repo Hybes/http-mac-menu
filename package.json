@@ -9,7 +9,9 @@
     "start": "tailwindcss build -i styles.css -o output.css && electron .",
     "pack": "tailwindcss build -i styles.css -o output.css && electron-builder --dir",
     "dist": "tailwindcss build -i styles.css -o output.css && electron-builder",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "publish": "node publish.js"
+
   },
   "keywords": [],
   "author": "Connect Dorset",
