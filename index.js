@@ -172,6 +172,21 @@ const updateTrayTitleForConfig = async (configNumber) => {
   }
 };
 
+const clearConfig = async (configNumber) => {
+  const keys = [
+    `url${configNumber}`,
+    `headers${configNumber}`,
+    `prefix${configNumber}`,
+    `suffix${configNumber}`,
+    `multiplier${configNumber}`,
+    `json${configNumber}`,
+    `length${configNumber}`,
+  ];
+  keys.forEach(async (key) => {
+    await settings.set(key, '');
+  });
+};
+
 const startConfigIntervals = async () => {
   const configs = [1, 2, 3]; // Adjust based on actual configurations
   configs.forEach((configNumber) => {
@@ -225,6 +240,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('config:save', saveConfig);
   ipcMain.handle('config:load', loadConfig);
   ipcMain.handle('config:exit', exitConfig);
+  ipcMain.handle('config:clear', clearConfig);
 
   app.setAppUserModelId('HTTP Mac Menu');
 

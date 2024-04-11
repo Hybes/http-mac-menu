@@ -1,5 +1,18 @@
 let saveConfig = document.getElementById('saveConfig');
 let cancel = document.getElementById('cancel');
+let clearConfig1 = document.getElementById('clearConfig1');
+let clearConfig2 = document.getElementById('clearConfig2');
+let clearConfig3 = document.getElementById('clearConfig3');
+
+const clearForm = (configNumber) => {
+  let form = document.querySelector(
+    `form[data-config-number="${configNumber}"]`
+  );
+  let inputs = form.querySelectorAll('input[type=text], textarea');
+  inputs.forEach((input) => {
+    input.value = '';
+  });
+};
 
 let config = null;
 
@@ -15,6 +28,8 @@ const save = async () => {
     `timer${config['data-config-number']}`,
     config[`timer${config['data-config-number']}`]
   );
+
+  awa;
 
   await api.saveConfig(config);
   api.exit();
@@ -33,6 +48,10 @@ const loadConfig = async () => {
     if (el) el.value = config[setting];
   }
 };
+
+clearConfig1?.addEventListener('click', () => clearForm('1'));
+clearConfig2?.addEventListener('click', () => clearForm('2'));
+clearConfig3?.addEventListener('click', () => clearForm('3'));
 
 window.addEventListener('DOMContentLoaded', loadConfig);
 

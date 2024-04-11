@@ -50,7 +50,7 @@
           <div class="flex gap-4 items-center">
             <label class="w-label" for="url3">URL</label>
             <textarea
-              rows="3"
+              rows="2"
               class="px-4 py-2 w-field whitespace-pre-wrap rounded-md placeholder:text-stone-500"
               id="url3"
               placeholder="https://api.brth.uk/v2/example"
@@ -148,12 +148,20 @@
             />
           </div>
         </div>
-        <input
-          class="bg-blue-500 hover:bg-blue-600 w-[150px] py-2 mt-3 rounded-md cursor-pointer"
-          type="submit"
-          id="saveConfig"
-          value="Save"
-        />
+        <div class="flex items-center justify-center gap-2">
+          <input
+            class="bg-red-500 hover:bg-red-600 w-[150px] py-2 mt-3 rounded-md cursor-pointer"
+            type="button"
+            id="clearConfig3"
+            value="Clear"
+          />
+          <input
+            class="bg-blue-500 hover:bg-blue-600 w-[150px] py-2 mt-3 rounded-md cursor-pointer"
+            type="submit"
+            id="saveConfig"
+            value="Save"
+          />
+        </div>
       </form>
     </div>
   </body>
