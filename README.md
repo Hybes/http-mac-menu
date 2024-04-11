@@ -5,11 +5,11 @@
 ## Download/Releases
 
 If you don't know which option to select, choose the first one:<br><br>
-[Mac OS - 64Bit/Intel](https://store.brth.uk/hybes/HTTP%20Mac%20Menu-1.5.0.dmg)<br>
-[Mac OS - ARM64/Silicon](https://store.brth.uk/hybes/HTTP%20Mac%20Menu-1.5.0-arm64.dmg)
+[Mac OS - 64Bit/Intel](https://store.brth.uk/hybes/HTTP%20Mac%20Menu-1.6.0.dmg)<br>
+[Mac OS - ARM64/Silicon](https://store.brth.uk/hybes/HTTP%20Mac%20Menu-1.6.0-arm64.dmg)
 
-[Mac OS ZIP - 64Bit/Intel](https://store.brth.uk/hybes/HTTP%20Mac%20Menu-1.5.0-mac.zip)<br>
-[Mac OS ZIP - ARM64/Silicon](https://store.brth.uk/hybes/HTTP%20Mac%20Menu-1.5.0-arm64-mac.zip)
+[Mac OS ZIP - 64Bit/Intel](https://store.brth.uk/hybes/HTTP%20Mac%20Menu-1.6.0-mac.zip)<br>
+[Mac OS ZIP - ARM64/Silicon](https://store.brth.uk/hybes/HTTP%20Mac%20Menu-1.6.0-arm64-mac.zip)
 
 I don't understand Apple's quarantine stuff, so you might need to run: ```xattr -cr /Applications/HTTP\ Mac\ Menu.app``` in terminal after you've moved the app to your Applications folder.
 

@@ -31,7 +31,7 @@ try {
   updateReadmeVersion(newVersion);
   // Build and upload
   execSync('npm run dist', { stdio: 'inherit' });
-  execSync('./upload', { stdio: 'inherit' });
+  execSync('./upload.sh', { stdio: 'inherit' });
   console.log('done');
 } catch (error) {
   console.error('An error occurred:', error);
