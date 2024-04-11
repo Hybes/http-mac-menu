@@ -1,7 +1,7 @@
 {
   "name": "cnnct-http-mac-menu",
   "productName": "HTTP Mac Menu",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "An app to allow users to keep track of crypto in the tray.",
   "main": "index.js",
   "scripts": {
@@ -15,20 +15,20 @@
   "author": "Connect Dorset",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^22.0.0",
-    "electron-builder": "^23.6.0"
+    "electron": "^29.3.0",
+    "electron-builder": "^24.13.3"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/hybes/http-mac-menu.git"
   },
   "dependencies": {
-    "@sentry/electron": "^4.14.0",
-    "autoprefixer": "^10.4.16",
-    "axios": "^1.2.2",
+    "@sentry/electron": "^4.22.0",
+    "autoprefixer": "^10.4.19",
+    "axios": "^1.6.8",
     "electron-settings": "^4.0.2",
-    "postcss": "^8.4.31",
-    "tailwindcss": "^3.3.5"
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3"
   },
   "build": {
     "appId": "cnnct.crypto-tracker",

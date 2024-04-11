@@ -15,7 +15,6 @@ let tray = null
 let isQuiting = false
 let settingsCache = {}
 let configWindow = null
-let prevNumber = null
 
 const loadConfig = async () => {
   return await settings.get()
@@ -32,8 +31,8 @@ const exitConfig = async () => {
 const openConfig = () => {
   if (!configWindow) {
       configWindow = new BrowserWindow({
-          width: 780,
-          height: 680,
+          width: 620,
+          height: 820,
           autoHideMenuBar: true,
           title: 'Configuration',
           webPreferences: {
@@ -163,8 +162,6 @@ app.whenReady().then(async () => {
   } else {
     settingsCache = await settings.get()
   }
-
-  openConfig()
 
   app.on('before-quit', () => {
       isQuiting = true
