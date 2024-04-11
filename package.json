@@ -28,6 +28,8 @@
     "axios": "^1.6.8",
     "electron-settings": "^4.0.2",
     "postcss": "^8.4.38",
+    "prettier": "^3.2.5",
+    "prettier-plugin-tailwindcss": "^0.5.13",
     "tailwindcss": "^3.4.3"
   },
   "build": {

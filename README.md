@@ -32,7 +32,7 @@ If something does... contact me: help@cnnct.uk
 ## Building
 
 If you wanna build it yourself, you can clone the repo: <br>
-```git clone https://github.com/Hybes/http-mac-menu```
-Fetch the node packages with <br>```npm i```
-Build the installers with <br>```npm run dist```
-Or test in dev with <br>```npm run start```
+`git clone https://github.com/Hybes/http-mac-menu`
+Fetch the node packages with <br>`npm i`
+Build the installers with <br>`npm run dist`
+Or test in dev with <br>`npm run start`
